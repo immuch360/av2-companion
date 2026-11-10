@@ -3,7 +3,7 @@
 # subproject: tools/av2_build.py sources puts it in subprojects/dav2d at the commit of tools/av2.lock.json, without
 # its command line tools (their getopt.c of Windows would add a licence) and without its tests.
 project('immuch360-av2', 'c',
-  version: '1.0.0',
+  version: '1.0.1',
   license: 'MIT',
   meson_version: '>= 0.60.0',
   default_options: [

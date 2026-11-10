@@ -3,6 +3,16 @@
 The versions of av2-companion. The archives of a release are named after the lock of dav2d they were built with
 (`Immuch360-av2-decoder-<lock id>-<system>.zip`); the protocol of `serve` has its own number, given by `--version`.
 
+## [1.0.1] (2026-11-10)
+
+* **Windows executable signed with Azure Trusted Signing.** `immuch360-av2.exe` carries the Authenticode signature of
+  APROGSYS (a certificate of Microsoft ID Verified CS, SHA-256, RFC 3161 timestamp of Microsoft), made by the Windows
+  job on a tag (`tools/windows_sign.py`, the tools and settings Immuch360 Desktop is signed with) and checked there by
+  `signtool verify /pa`; `BUILD-INFO.txt` of the archive says it is signed, and its checks run again on the signed
+  archive. A release now refuses a Windows archive whose program is not signed.
+* `av2-companion-1.0.1.json` gives the signature of each archive (`signature`).
+* The code of the program is that of 1.0.0; the archives are built again from this commit.
+
 ## [1.0.0] (2026-11-10)
 
 The first release of this repository: `immuch360-av2` as shipped in Immuch360 Desktop build 24 of 9 November 2026

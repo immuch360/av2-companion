@@ -155,7 +155,8 @@ took 36 s for this README and the checks 18 s.
 
 On Windows the build runs in a Visual Studio 2022 developer environment found by Meson (`--system windows-x64`, the
 static C runtime); on macOS `--system macos-universal` builds arm64 and x86_64 and joins them with `lipo`. The jobs of
-`.github/workflows/build.yml` give the exact steps for each.
+`.github/workflows/build.yml` give the exact steps for each. On a tag, the Windows job also signs `immuch360-av2.exe`
+with Azure Trusted Signing through the secrets of this repository; a build by hand is not signed.
 
 ## How Immuch360 Desktop uses it
 
@@ -285,8 +286,9 @@ arguments (and a `--parent` process that cannot be watched); 3 the video cannot 
 * **Formats.** 4:2:0 in 8 and 10 bits; 4:0:0, 4:2:2, 4:4:4 and 12 bits are refused by the probe, with their name.
   One picture per temporal unit, as encoders write it. No audio: the program serves the video track only.
 * **One video, one player.** Each program serves one file to one connection at a time; run one per video.
-* **Windows signature.** The Windows program of the releases of this repository is not signed yet; Smart App Control,
-  where it is on, may block it.
+* **Signatures.** Since 1.0.1 the Windows program is signed by APROGSYS with Azure Trusted Signing (Authenticode,
+  timestamped by Microsoft). The macOS program is signed ad hoc only: a copy downloaded by a browser needs its
+  quarantine removed, as above.
 
 ## Credits and licences
 

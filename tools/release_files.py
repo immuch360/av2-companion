@@ -17,9 +17,10 @@ code) and that the three were built from one commit, the commit of the tag, then
   SHA256SUMS                 the SHA-256 of every file of the release, written last
 
   release_files.py --archives DIR --out DIR --tag vX.Y.Z [--commit SHA] [--run ID] [--repo OWNER/NAME] [--date D]
-                   [--notes FILE]
+                   [--notes FILE] [--require-signed-windows]
       the files above in the folder --out (the archives are copied there); --notes writes the text of the release
-      from the section of CHANGELOG.md for the version, outside --out
+      from the section of CHANGELOG.md for the version, outside --out; --require-signed-windows refuses a Windows
+      archive whose program carries no Authenticode signature or whose BUILD-INFO.txt does not say it is signed
 
 Only the Python standard library is used, and no Python cache is written next to the scripts. Exit codes: 0 done,
 1 a check failed, 2 bad arguments or files.
@@ -34,6 +35,7 @@ import json
 import pathlib
 import re
 import shutil
+import struct
 import sys
 import zipfile
 
@@ -71,6 +73,32 @@ def built_from(files: dict) -> str | None:
     """The commit an archive was built from, as its BUILD-INFO.txt says"""
     found = re.search(rb'^immuch360-av2 \S+/tree/([0-9a-f]{40}) ', files.get('BUILD-INFO.txt', b''), re.M)
     return found.group(1).decode() if found else None
+
+
+def has_certificate(data: bytes) -> bool:
+    """Whether the PE file data carries a certificate table (an Authenticode signature)"""
+    if len(data) < 0x40 or data[:2] != b'MZ':
+        return False
+    pe, = struct.unpack_from('<I', data, 0x3C)
+    if data[pe:pe + 4] != b'PE\0\0':
+        return False
+    optional = pe + 24
+    magic, = struct.unpack_from('<H', data, optional)
+    directories = optional + (112 if magic == 0x20B else 96)
+    count, = struct.unpack_from('<I', data, directories - 4)
+    if count <= 4:
+        return False
+    table, size = struct.unpack_from('<II', data, directories + 4 * 8)
+    return bool(table and size) and table + size <= len(data)
+
+
+def signature_of(system: str, files: dict) -> str:
+    """How the program of an archive is signed, as the manifest says it"""
+    if system == 'windows-x64':
+        signed = av2_build.SIGNED_LINE.encode() in files.get('BUILD-INFO.txt', b'') and \
+            has_certificate(files.get('immuch360-av2.exe', b''))
+        return 'Authenticode, APROGSYS (Azure Artifact Signing)' if signed else 'none'
+    return 'ad hoc' if system == 'macos-universal' else 'none'
 
 
 def changelog_section(version: str, text: str) -> str:
@@ -119,6 +147,7 @@ def manifest(tag: str, repo: str, run: str | None, commit: str, date: str, lock:
             'url': base + name,
             'size': len(data),
             'sha256': sha256(data),
+            'signature': signature_of(system, files_of(data)),
             'archiveFiles': [{'path': path, 'size': len(content), 'sha256': sha256(content),
                               'executable': path in PROGRAMS[system]}
                              for path, content in sorted(files_of(data).items())],
@@ -141,6 +170,7 @@ def main(argv=None) -> int:
     parser.add_argument('--date', default=datetime.date.today().isoformat())
     parser.add_argument('--notes', type=pathlib.Path)
     parser.add_argument('--lock', type=pathlib.Path, default=av2_build.LOCK)
+    parser.add_argument('--require-signed-windows', action='store_true')
     args = parser.parse_args(argv)
     if not re.fullmatch(r'v\d+\.\d+\.\d+', args.tag):
         print(f'--tag {args.tag!r} is not vX.Y.Z')
@@ -161,6 +191,10 @@ def main(argv=None) -> int:
             if av2_build.main(['--lock', str(args.lock), 'check', '--system', system, '--archive', str(target)]):
                 problems.append(f'{name}: av2_build.py check failed')
             commits.add(built_from(files_of(archives[system])))
+            if system == 'windows-x64' and args.require_signed_windows and \
+                    signature_of(system, files_of(archives[system])) == 'none':
+                problems.append(f'{name}: immuch360-av2.exe is not signed (no Authenticode certificate, or no line '
+                                'of BUILD-INFO.txt saying it is)')
         if len(commits) != 1 or None in commits:
             problems.append(f'the three archives come from {sorted(str(c) for c in commits)}, not one commit')
         commit = next(iter(commits))

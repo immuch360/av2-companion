@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: AGPL-3.0-only
+// SPDX-License-Identifier: MIT
 // Copyright (c) 2026 FreeKC (Immuch360)
 //
 // immuch360-av2 serve: one decoder, one connection served at a time. The threads:

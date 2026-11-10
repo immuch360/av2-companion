@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: AGPL-3.0-only
+// SPDX-License-Identifier: MIT
 // Copyright (c) 2026 FreeKC (Immuch360)
 //
 // The bytes around the decoder: the OBUs of AV2 (a LEB128 size that counts the header, then a header byte whose bits

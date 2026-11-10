@@ -1,27 +1,27 @@
 #!/usr/bin/env python3
-"""The AV2 decoder of Immuch360 Desktop: the sources, the build, the licences, the checks and the archive of its jobs.
+"""immuch360-av2, the AV2 companion of Immuch360 Desktop: the sources, the build, the licences, the checks and the
+archive of its CI jobs.
 
-immuch360-av2 (mobile/native/av2, C on the library of dav2d by VideoLAN) decodes AV2 videos for the app and serves the
-pictures to its player as a virtual y4m on 127.0.0.1 (plan of the 2nd of November 2026, sections 2 and 3). Its
-binaries come from our CI only: the jobs av2-windows, av2-linux and av2-macos of immuch360-desktop.yml build it from
-dav2d at the commit of av2.lock.json next to this script, check it, and upload Immuch360-av2-decoder-<id>-<system>.zip,
-a name that no release of the app attaches.
+immuch360-av2 (src/, C on the library of dav2d by VideoLAN) decodes AV2 videos and serves the pictures to a libmpv
+player as a virtual y4m on 127.0.0.1. Its binaries come from the CI of this repository: the jobs windows, linux and
+macos of .github/workflows/build.yml build it from dav2d at the commit of av2.lock.json next to this script, check it,
+and upload Immuch360-av2-decoder-<id>-<system>.zip, the archives a release of this repository attaches.
 
   av2_build.py lock --system SYSTEM [--github-output]
       the id of the lock, the commit of dav2d, the tools and the name of the artifact of SYSTEM (windows-x64,
       linux-x64 or macos-universal)
   av2_build.py sources [--dir DIR]
-      dav2d at the commit of the lock in DIR (by default mobile/native/av2/subprojects/dav2d, where Meson finds it),
+      dav2d at the commit of the lock in DIR (by default subprojects/dav2d, where Meson finds it),
       checked against the commit and the SHA-256 of its licence files in the lock
-  av2_build.py build --system SYSTEM --build DIR [--source-commit COMMIT]
+  av2_build.py build --system SYSTEM --build DIR [--source-commit COMMIT] [--jobs N]
       Meson and Ninja with the options of the lock; on Windows with MSVC and its static runtime (Meson finds Visual
       Studio itself, --vsenv), on macOS twice (arm64, then x86_64 by a cross file) and joined by lipo, then signed ad
       hoc; the program in DIR/immuch360-av2[.exe], the tools that built it in DIR/tools.json (the C compiler as Meson
-      found it, nasm, Meson, Ninja), and the seconds it took
+      found it, nasm, Meson, Ninja), and the seconds it took; --jobs caps the parallel compilations (default: Ninja's)
   av2_build.py licences --source DIR
-      the licences of the lock: every component under a permissive licence (ours apart, pinned here: the AGPL 3.0 of
-      the program, the MIT licence of immuch360-run), and each text of licenses/av2 equal to the file of the sources it
-      comes from and to the SHA-256 of the lock; a GPL entry fails here
+      the licences of the lock: every component under a permissive licence (ours pinned here: the MIT licence of
+      the program and of immuch360-run), and each text of licenses/ equal to the file of the sources it comes from
+      and to the SHA-256 of the lock; a GPL entry fails here
   av2_build.py pack --system SYSTEM --source DIR --program FILE --out DIR [--launcher FILE] [--source-commit COMMIT]
       the archive: the program (and on Linux immuch360-run), licenses/, BUILD-INFO.txt (with the tools of tools.json
       next to the program) and SHA256SUMS.txt; sorted names and fixed dates, the same files give the same bytes
@@ -32,10 +32,10 @@ a name that no release of the app attaches.
       the reference decoder avmdec v1.0.0, the requests of a player, the token, 127.0.0.1, the end of the input);
       --arch-x86-64 runs the x86_64 slice of the macOS program under Rosetta
   av2_build.py help --output FILE [--fixture FILE]
-      the output of immuch360-av2 --help compared with mobile/test/fixtures/av2/immuch360_av2_help.txt, the text the
-      app's launcher is frozen by
+      the output of immuch360-av2 --help compared with tests/fixtures/immuch360_av2_help.txt, the text the launcher
+      of Immuch360 Desktop is frozen by
   av2_build.py program --system windows-x64 --archive FILE --out DIR [--github-output]
-      the program of the archive, written in DIR for the release workflow to sign (lot AD11: av2-decoder-1)
+      the program of the archive, written in DIR for a signing step to sign
   av2_build.py signed --system windows-x64 --archive FILE --program FILE --out DIR [--github-output]
       the archive again with the program signed: FILE must be the program of the archive with an Authenticode
       signature added and nothing else changed (the two equal once the checksum of the PE header, its certificate
@@ -67,20 +67,20 @@ import tempfile
 import time
 import zipfile
 
-# windows_bundle and av2_serve_check are imported later, from here: their caches would land next to them
+# pe_imports and av2_serve_check are imported later, from here: their caches would land next to them
 sys.dont_write_bytecode = True
 
 HERE = pathlib.Path(__file__).resolve().parent
-ROOT = HERE.parents[2]
+ROOT = HERE.parent
 LOCK = HERE / 'av2.lock.json'
-LICENCES = ROOT / 'licenses' / 'av2'
-NATIVE = ROOT / 'mobile' / 'native' / 'av2'
-FIXTURES = ROOT / 'mobile' / 'test' / 'fixtures' / 'av2'
+LICENCES = ROOT / 'licenses'
+NATIVE = ROOT
+FIXTURES = ROOT / 'tests' / 'fixtures'
 HELP_FIXTURE = FIXTURES / 'immuch360_av2_help.txt'
 SYSTEMS = ('windows-x64', 'linux-x64', 'macos-universal')
 ARTIFACT_PREFIX = 'Immuch360-av2-decoder-'
 PROGRAM = {'windows-x64': 'immuch360-av2.exe', 'linux-x64': 'immuch360-av2', 'macos-universal': 'immuch360-av2'}
-REPOSITORY = 'https://github.com/freeKC/Immuch360'
+REPOSITORY = 'https://github.com/immuch360/av2-companion'
 # What a program of the archive may need from the system, and nothing else: the C library of any Linux of the packages
 # (glibc 2.35 of Ubuntu 22.04), libSystem on macOS, and on Windows the DLLs of Windows itself (the C runtime is static)
 LINUX_SYSTEM = {'libc.so.6', 'libm.so.6', 'libpthread.so.0', 'libdl.so.2', 'librt.so.1', 'ld-linux-x86-64.so.2'}
@@ -94,8 +94,8 @@ GPL_STRINGS = (b'GNU General Public License', b'General Public License', b'GPL-2
 # The licence words of the lock that are a GPL: such an entry fails whatever list it is in
 GPL_LICENCE = re.compile(r'(?i)\b(A|L)?GPL\b|GPL-|General Public')
 # Our own code and its licence, fixed here and not only in the lock: the LICENSE of this repository for the program,
-# the SPDX line of .github/desktop/ai/immuch360_run.c for the launcher. No other component may say it is ours
-OWN_LICENCES = {'immuch360-av2': 'AGPL-3.0-only', 'immuch360-run': 'MIT'}
+# the SPDX line of launcher/immuch360_run.c for the launcher. No other component may say it is ours
+OWN_LICENCES = {'immuch360-av2': 'MIT', 'immuch360-run': 'MIT'}
 
 
 class Failure(Exception):
@@ -272,6 +272,7 @@ def command_build(args) -> int:
     commit = args.source_commit or os.environ.get('GITHUB_SHA') or 'unknown'
     options = [*lock['meson']['common'], *lock['meson'][args.system], f'-Dsource_commit={commit}',
                f'-Ddav2d_commit={lock["dav2d"]["commit"]}']
+    jobs = ['-j', str(args.jobs)] if args.jobs else []
     started = time.monotonic()
     build = args.build
     if args.system == 'macos-universal':
@@ -282,7 +283,7 @@ def command_build(args) -> int:
             if folder.exists():
                 shutil.rmtree(folder)
             run(['meson', 'setup', folder, NATIVE, *options, *extra])
-            run(['meson', 'compile', '-C', folder])
+            run(['meson', 'compile', '-C', folder, *jobs])
             slices.append(folder / 'immuch360-av2')
         program = build / 'immuch360-av2'
         run(['lipo', '-create', '-output', program, *slices])
@@ -295,7 +296,7 @@ def command_build(args) -> int:
         if args.system == 'windows-x64':
             setup.insert(2, '--vsenv')
         run(setup)
-        run(['meson', 'compile', '-C', build])
+        run(['meson', 'compile', '-C', build, *jobs])
         program = build / PROGRAM[args.system]
         if args.system == 'linux-x64':
             run(['strip', '--strip-unneeded', program])
@@ -315,7 +316,7 @@ def command_build(args) -> int:
 def licence_problems(lock: dict, source: pathlib.Path | None, licences: pathlib.Path = LICENCES,
                      system: str | None = None) -> list:
     """What is wrong with the licences of the lock: a licence that is not permissive (ours apart), a text of
-    licenses/av2 that differs from the sources or from the SHA-256 of the lock"""
+    licenses/ that differs from the sources or from the SHA-256 of the lock"""
     problems = []
     permissive = set(lock['permissive'])
     for licence in permissive:
@@ -341,11 +342,11 @@ def licence_problems(lock: dict, source: pathlib.Path | None, licences: pathlib.
         if source is not None:
             theirs = source_file(source, component['source'], component.get('lines'))
             if text_bytes(text.read_bytes()) != theirs:
-                problems.append(f'licenses/av2/{component["text"]} differs from {component["source"]} of the sources '
+                problems.append(f'licenses/{component["text"]} differs from {component["source"]} of the sources '
                                 'built: copy it again')
             digest = lock['dav2d']['files'].get(component['source'])
             if digest and not component.get('lines') and sha256(text_bytes(text.read_bytes())) != digest:
-                problems.append(f'licenses/av2/{component["text"]}: not the SHA-256 the lock gives '
+                problems.append(f'licenses/{component["text"]}: not the SHA-256 the lock gives '
                                 f'{component["source"]}')
     return problems
 
@@ -374,11 +375,10 @@ def archive_licences(lock: dict, system: str, commit: str, licences: pathlib.Pat
         else:
             files[f'licenses/{component["text"]}'] = text_bytes((licences / component['text']).read_bytes())
     files['licenses/immuch360-av2-SOURCE.txt'] = '\n'.join([
-        'immuch360-av2 is free software: you can redistribute it and/or modify it under the terms of the GNU Affero',
-        'General Public License version 3 (immuch360-av2-AGPL-3.0.txt). Its source, at the commit this program was',
-        'built from:',
-        f'{REPOSITORY}/tree/{commit}/mobile/native/av2',
-        f'and the build and checks of this archive: {REPOSITORY}/tree/{commit}/.github/desktop/av2',
+        'immuch360-av2 is free software under the MIT licence (immuch360-av2-MIT.txt). Its source, at the commit this',
+        'program was built from:',
+        f'{REPOSITORY}/tree/{commit}',
+        f'and the build and checks of this archive: {REPOSITORY}/tree/{commit}/tools',
         '',
     ]).encode()
     files['licenses/README.md'] = text_bytes((licences / 'README.md').read_bytes())
@@ -391,8 +391,8 @@ def build_info(lock: dict, system: str, commit: str, tools: dict) -> bytes:
         run_url = (f'{os.environ.get("GITHUB_SERVER_URL", "https://github.com")}/{os.environ.get("GITHUB_REPOSITORY")}'
                    f'/actions/runs/{os.environ["GITHUB_RUN_ID"]}')
     return '\n'.join([
-        f'immuch360-av2, the AV2 decoder of Immuch360 Desktop, {system}, lock {lock["id"]}',
-        f'immuch360-av2 {REPOSITORY}/tree/{commit}/mobile/native/av2 (protocol of serve 1)',
+        f'immuch360-av2, the AV2 companion of Immuch360 Desktop, {system}, lock {lock["id"]}',
+        f'immuch360-av2 {REPOSITORY}/tree/{commit} (protocol of serve 1)',
         f'dav2d {lock["dav2d"]["repository"]} {lock["dav2d"]["commit"]} ({lock["dav2d"]["describe"]}), static library',
         f'C compiler: {tools["compiler"]}',
         f'nasm: {tools["nasm"]}',
@@ -400,7 +400,7 @@ def build_info(lock: dict, system: str, commit: str, tools: dict) -> bytes:
         ' '.join([*lock['meson']['common'], *lock['meson'][system]]),
         *([f'Built by {run_url}'] if run_url else []),
         'Licences: licenses/ (dav2d BSD-2-Clause, x86inc.asm ISC, Alliance for Open Media Patent License 1.0, '
-        'immuch360-av2 AGPL-3.0' + (', immuch360-run MIT' if system == 'linux-x64' else '') + ')',
+        'immuch360-av2 MIT' + (', immuch360-run MIT' if system == 'linux-x64' else '') + ')',
         '',
     ]).encode()
 
@@ -518,13 +518,10 @@ def macho_dylibs(data: bytes) -> dict:
 
 
 def pe_imports(data: bytes) -> tuple:
-    sys.path.insert(0, str(ROOT / '.github' / 'desktop'))
-    import windows_bundle  # noqa: E402 (the PE reader of the Windows ZIP of the app)
+    sys.path.insert(0, str(HERE))
+    import pe_imports as reader  # noqa: E402 (the PE reader next to this script)
 
-    with tempfile.TemporaryDirectory(prefix='av2-') as temporary:
-        path = pathlib.Path(temporary) / 'program.exe'
-        path.write_bytes(data)
-        info = windows_bundle.read_pe(path)
+    info = reader.read_pe(data)
     return info['machine'], info['imports'] + info['delay_imports']
 
 
@@ -564,7 +561,7 @@ def static_problems(system: str, files: dict, programs: set) -> list:
 
 # --- the signed program of Windows ---------------------------------------------------------------------------------
 
-# What BUILD-INFO.txt of a signed archive says (signed by the sign-windows job of immuch360-desktop-release.yml)
+# What BUILD-INFO.txt of a signed archive says (the signing step of the Immuch360 release workflow writes it)
 SIGNED_LINE = ('Signed: immuch360-av2.exe by APROGSYS with Azure Artifact Signing (Authenticode, SHA-256, RFC 3161 '
                'timestamp of Microsoft)')
 
@@ -717,7 +714,8 @@ def command_check(args) -> int:
         problems.append('BUILD-INFO.txt does not name the C compiler and the nasm of the build')
     elif nasm_wrong:
         problems.append(f'BUILD-INFO.txt: {nasm_wrong}')
-    commit_match = re.search(rb'/tree/([0-9a-f]{40}|unknown)/mobile/native/av2', files.get('BUILD-INFO.txt', b''))
+    commit_match = re.search(rb'^immuch360-av2 \S+/tree/([0-9a-f]{40}|unknown) ', files.get('BUILD-INFO.txt', b''),
+                             re.M)
     commit = commit_match.group(1).decode() if commit_match else 'unknown'
     expected = archive_licences(lock, args.system, commit)
     for name, data in sorted(expected.items()):
@@ -794,6 +792,7 @@ def main(argv=None) -> int:
     build.add_argument('--system', choices=SYSTEMS, required=True)
     build.add_argument('--build', type=pathlib.Path, required=True)
     build.add_argument('--source-commit')
+    build.add_argument('--jobs', type=int, default=0)
     licences = commands.add_parser('licences')
     licences.add_argument('--source', type=pathlib.Path, default=NATIVE / 'subprojects' / 'dav2d')
     pack = commands.add_parser('pack')

@@ -1,18 +1,17 @@
-# The AV2 decoder of Immuch360 Desktop
+# The licences of immuch360-av2
 
-Immuch360 Desktop plays AV2 videos (`.ivf`, `.obu`) with `immuch360-av2`, a small program of ours that decodes them
-with the library of [dav2d](https://code.videolan.org/videolan/dav2d) (VideoLAN) and serves the pictures to the video
-player of the app on 127.0.0.1 only. It is not part of the app: the app downloads it when an AV2 video plays without it,
-as an archive our CI built from the sources (`.github/workflows/immuch360-desktop.yml`, jobs `av2-windows`, `av2-linux`
-and `av2-macos`; `.github/desktop/av2/av2_build.py`).
+`immuch360-av2` decodes AV2 videos (`.ivf`, `.obu`) with the library of [dav2d](https://code.videolan.org/videolan/dav2d)
+(VideoLAN) and serves the pictures to a video player on 127.0.0.1 only. Each archive of a release holds the program, built
+by the CI of this repository from the sources (`.github/workflows/build.yml`, `tools/av2_build.py`), and in `licenses/`
+the texts of the code it is made of.
 
 | Code | Where | Licence | Text in the archive |
 |---|---|---|---|
-| dav2d | https://code.videolan.org/videolan/dav2d at the commit of `.github/desktop/av2/av2.lock.json`, built as a static library without its command line tools | BSD 2-Clause | `dav2d-COPYING.txt` (its `COPYING`) |
+| dav2d | https://code.videolan.org/videolan/dav2d at the commit of `tools/av2.lock.json`, built as a static library without its command line tools | BSD 2-Clause | `dav2d-COPYING.txt` (its `COPYING`) |
 | `x86inc.asm` of the x264 project, part of dav2d | `src/ext/x86/x86inc.asm` of dav2d | ISC | `x86inc-ISC.txt` (its header) |
 | The patent licence AV2 implementations come with | `doc/PATENTS` of dav2d | Alliance for Open Media Patent License 1.0 | `AOM-PATENTS.txt` |
-| immuch360-av2 | `mobile/native/av2` of Immuch360 | AGPL 3.0, the licence of this repository | `immuch360-av2-AGPL-3.0.txt` and `immuch360-av2-SOURCE.txt` (where its source is, at the commit built) |
-| immuch360-run, the launcher of the Linux archive | `.github/desktop/ai/immuch360_run.c` of Immuch360 | MIT | `immuch360-run-MIT.txt` |
+| immuch360-av2 | `src/` of this repository | MIT, the licence of this repository | `immuch360-av2-MIT.txt` and `immuch360-av2-SOURCE.txt` (where its source is, at the commit built) |
+| immuch360-run, the launcher of the Linux archive | `launcher/immuch360_run.c` of this repository | MIT | `immuch360-run-MIT.txt` |
 
 Nothing under the GPL is built in: the jobs read the dynamic libraries and the imports of each program (only those of
 the system), look for the strings of GPL code in it, and compare every licence text of the archive with the sources it

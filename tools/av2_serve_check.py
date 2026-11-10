@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """The app's side of immuch360-av2 serve, in Python: the client the av2 jobs test the program of each archive with.
 
-It does what av2_playback.dart will do in the app (plan of the 2nd of November 2026, section 2.1): read the container
+It does what Immuch360 Desktop does (av2_playback.dart of the app) and what tools/feed_ivf.py does: read the container
 (IVF or Section 5 OBUs), cut it into temporal units at each temporal delimiter (a unit cut by the end of a truncated
 file is left out), mark the random access units (a CLOSED_LOOP_KEY OBU), start serve with the probe's numbers, send
 the index record, answer each "need G U" line with the units from U on, then a record of length 0, and read the lines
@@ -32,7 +32,7 @@ it always closes the pipe (a pipe whose end does not block on Linux and macOS, a
 Windows, the program reading its client end).
 
   av2_serve_check.py check --program FILE --fixtures DIR [--threads N]
-      every check above on the fixtures of DIR (mobile/test/fixtures/av2); exit 1 on a failure
+      every check above on the fixtures of DIR (tests/fixtures); exit 1 on a failure
   av2_serve_check.py index --file FILE
       the temporal units, random access units and frame rate of FILE as this client reads them, as JSON
   av2_serve_check.py feed --program FILE --file FILE [--threads N] [--depth 8]

@@ -1,10 +1,10 @@
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: MIT
 # immuch360-av2, the AV2 companion of Immuch360 Desktop, linked statically with the library of dav2d. dav2d is a
-# subproject: .github/desktop/av2/av2_build.py sources puts it in subprojects/dav2d at the commit of av2.lock.json,
-# without its command line tools (their getopt.c of Windows would add a licence) and without its tests.
+# subproject: tools/av2_build.py sources puts it in subprojects/dav2d at the commit of tools/av2.lock.json, without
+# its command line tools (their getopt.c of Windows would add a licence) and without its tests.
 project('immuch360-av2', 'c',
-  version: '1',
-  license: 'AGPL-3.0-only',
+  version: '1.0.0',
+  license: 'MIT',
   meson_version: '>= 0.60.0',
   default_options: [
     'c_std=c11',

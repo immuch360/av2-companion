@@ -1,4 +1,4 @@
-immuch360-run (.github/desktop/ai/immuch360_run.c of Immuch360), the launcher of the Linux archive
+immuch360-run (launcher/immuch360_run.c of av2-companion), the launcher of the Linux archive
 
 Copyright (c) 2026 FreeKC (Immuch360)
 

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: AGPL-3.0-only
+// SPDX-License-Identifier: MIT
 // Copyright (c) 2026 FreeKC (Immuch360)
 //
 // immuch360-av2, the AV2 companion of Immuch360 Desktop: the commands main.c hands over to.

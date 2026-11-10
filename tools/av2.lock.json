@@ -33,20 +33,20 @@
     },
     {
       "name": "immuch360-av2",
-      "licence": "AGPL-3.0-only",
-      "text": "immuch360-av2-AGPL-3.0.txt",
+      "licence": "MIT",
+      "text": "immuch360-av2-MIT.txt",
       "own": "LICENSE"
     },
     {
       "name": "immuch360-run",
       "licence": "MIT",
       "text": "immuch360-run-MIT.txt",
-      "own": "licenses/av2/immuch360-run-MIT.txt",
+      "own": "licenses/immuch360-run-MIT.txt",
       "systems": ["linux-x64"]
     }
   ],
   "permissive": ["BSD-2-Clause", "BSD-3-Clause", "ISC", "MIT", "Zlib", "LicenseRef-AOM-Patent-License-1.0"],
-  "own": {"immuch360-av2": "AGPL-3.0-only", "immuch360-run": "MIT"},
+  "own": {"immuch360-av2": "MIT", "immuch360-run": "MIT"},
   "tools": {
     "meson": "1.7.0",
     "ninja": "1.13.0",

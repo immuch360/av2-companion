@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: AGPL-3.0-only
+// SPDX-License-Identifier: MIT
 // Copyright (c) 2026 FreeKC (Immuch360)
 //
 // immuch360-av2 probe FILE|-: what the app needs to know before serve, as one line of JSON. The sequence header comes

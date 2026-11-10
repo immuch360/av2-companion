@@ -1,11 +1,11 @@
-// SPDX-License-Identifier: AGPL-3.0-only
+// SPDX-License-Identifier: MIT
 // Copyright (c) 2026 FreeKC (Immuch360)
 //
 // immuch360-av2: plays AV2 videos in Immuch360 Desktop. The app reads the container (IVF or OBUs) and feeds the
 // temporal units through the standard input; this program decodes them with the library of dav2d (VideoLAN) and
 // serves the pictures to the player of the app (libmpv) as a virtual y4m over HTTP on 127.0.0.1, so that no decoded
-// byte crosses the app (plan of the 2nd of November 2026, section 2). The arguments, records and lines are those of
-// README.md next to the sources; the text of --help is frozen in mobile/test/fixtures/av2/immuch360_av2_help.txt.
+// byte crosses the app. The arguments, records and lines are those of README.md; the text of --help is frozen in
+// tests/fixtures/immuch360_av2_help.txt, the copy of the text the launcher of Immuch360 Desktop is frozen by.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

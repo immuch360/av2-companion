@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: AGPL-3.0-only
+// SPDX-License-Identifier: MIT
 // Copyright (c) 2026 FreeKC (Immuch360)
 //
 // The system calls behind platform.h: Win32 and Winsock on Windows, POSIX threads and BSD sockets elsewhere.

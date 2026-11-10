@@ -5,7 +5,8 @@
 // (design-final 2026-10-27, section 4.5, point 3). Dart cannot act between the fork and the exec of Process.start, so
 // the app starts this launcher, which asks the kernel to kill it when its parent goes (PR_SET_PDEATHSIG, kept across
 // execv), lowers its priority when asked, and becomes the program by execv: the same process id, nothing left behind.
-// Built with stable-diffusion.cpp by the sdcpp-linux job of immuch360-desktop.yml and shipped in the same archive.
+// Here it ships in the Linux archive of immuch360-av2 (.github/workflows/build.yml), the app starting the companion
+// through it; Immuch360 Desktop ships the same launcher with its AI programs.
 //
 //   immuch360-run --parent PID [--nice N] [--] PROGRAM [ARGUMENT]...
 //
